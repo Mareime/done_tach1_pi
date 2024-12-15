@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 use App\Exports\PaiementExport;
 use App\Imports\PaiementImport;
 use Maatwebsite\Excel\Facades\Excel;
-
+use Carbon\Carbon;
 use Kwn\NumberToWords\NumberToWords;
 use PhpOffice\PhpWord\SimpleType\Jc;
 use PhpOffice\PhpWord\PhpWord;
@@ -215,188 +215,201 @@ function afficherAnneeActuelle() {
 
         if($paiement->impulsion == 'TVA'){
 
-            $phpWord = new PhpWord();
-            $section = $phpWord->addSection();
-        
-            // Add content to the Word document
-            $section->addText("République Islamique de Mauritanie:", null, ['align' => Jc::LEFT]);
-            $section->addText("Honneur-Fraternité-Justice:", null, ['align' => Jc::LEFT]);
-            $section->addText("MINISTERE DE L'ENSEIGNEMENT SUPERIEUR:", null, ['align' => Jc::LEFT]);
-            $section->addText("ET DE LA RECHERCHE SCIENTIFIQUE:" , null, ['align' => Jc::LEFT]);
-            $section->addText("INSTITUT SUPERIEUR NUMERIQUE:" , null, ['align' => Jc::LEFT]);
-            $section->addText("Titre de paiement Numero:".$paiement->id . "/2024" , null, ['align' => Jc::CENTER]);
+          // Création du document Word
+    $phpWord = new PhpWord();
+    $section = $phpWord->addSection();
+    $TCC = $paiement->montant;
+    $HT = round($TCC / (1 + $tva), 2);
+    $calc_tva = round(($tva * $TCC) / (1 + $tva), 1);
+    $calc_imf = round($TCC * $imf, 2);
+    $net = round($TCC - ($calc_tva + $calc_imf), 1);
+    
 
-            $section->addText("Imputation budgetaire: Compte principale: "." ".$this->afficherDeuxPremiersChiffres($paiement->compte->numero));
-            $section->addText("Bénéficiaire:" .$paiement->beneficiaire->nom . " " .$paiement->beneficiaire->prenom);
-            $section->addText("Montant: " . $paiement->montant);
-            $section->addText("Montant en lettres: " . $this->convertirMontantEnLettres($paiement->montant));
+    // En-tête
+    $section->addText("République Islamique de Mauritanie", ['bold' => true], ['align' => Jc::CENTER]);
+    $section->addText("Honneur – Fraternité – Justice", ['bold' => true], ['align' => Jc::CENTER]);
+    $section->addText("MINISTERE DE L'ENSEIGNEMENT SUPERIEUR", ['bold' => true], ['align' => Jc::CENTER]);
+    $section->addText("ET DE LA RECHERCHE SCIENTIFIQUE", ['bold' => true], ['align' => Jc::CENTER]);
+    $section->addText("INSTITUT SUPÉRIEUR NUMÉRIQUE", ['bold' => true], ['align' => Jc::CENTER]);
+    $section->addText("Titre de paiement N° " . $paiement->id . "/" .$this-> afficherAnneeActuelle(), ['bold' => true, 'underline' => 'single'], ['align' => Jc::CENTER]);
 
-            $section->addText("Mode de Paiement: " . $paiement->mode_paiement);
-            
-            $TCC = $paiement->montant;
-            $HT = $TCC/(1 + $tva);
-            $calc_tva = ($tva * $TCC)/(1 + $tva);
-            $calc_imf = $TCC * $imf ;
-            $net = $TCC - ($tva + $imf);
+    // Corps
+    $section->addText("Imputation budgétaire : Compte Principale :"." " .$this->afficherDeuxPremiersChiffres($paiement->compte->numero)." ". "SOUS Compte "." ". $paiement->compte->numero, ['bold' => true], ['align' => Jc::LEFT]);
+    $section->addText("Bénéficiaire : " . $paiement->beneficiaire->nom." ". $paiement->beneficiaire->prenom, ['bold' => true], ['align' => Jc::LEFT]);
+    $section->addText("Montant (en chiffres) : " . number_format($paiement->montant, 0, ',', ' ') . " MRU", ['bold' => true], ['align' => Jc::LEFT]);
+    $section->addText("Montant (en lettres) : " . $this->convertirMontantEnLettres($paiement->montant) . " MRU", ['bold' => true], ['align' => Jc::LEFT]);
+    $section->addText("Mode de paiement : "." ".$paiement->mode_paiement, null, ['align' => Jc::LEFT]);
+    $section->addText("Montant brut : " . $this->convertirMontantEnLettres($paiement->montant) . " MRU", ['bold' => true], ['align' => Jc::LEFT]);
+    $section->addText("Motive de la dépense : "." " .$paiement->motif_de_la_depence, ['bold' => true], ['align' => Jc::LEFT]);
 
-            $section->addText("TVA: " .$calc_tva);
-            $section->addText("IMF: " .$calc_imf);
-            $section->addText("ITS: ");
-            $section->addText("CNAM: ");
-            $section->addText("NET: " .$net);
-            
-            $section->addText("La date: " . $paiement->date_paiement, null, ['align' => Jc::RIGHT]);
-            $section->addText("Le Directeur", ['align' => Jc::RIGHT]);
-            $section->addText("Le Comptable", ['align' => Jc::LEFT]);
-            
-            $fileName = 'paiement_' . $paiement->id . '.docx';
-            $filePath = storage_path('app/public/' . $fileName);
-            $phpWord->save($filePath, 'Word2007');
-        
-            // Envoyer le fichier Word pour l'ouvrir dans le navigateur
-            return response()->file($filePath, [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'Content-Disposition' => 'inline; filename="' . $fileName . '"'
-            ])->deleteFileAfterSend(true);  // Suppression du fichier après l'envoi
+    // Taxes
+    $section->addText("TVA : ". number_format($calc_tva, 0, ',', ' ') . " MRU", ['bold' => true], ['align' => Jc::LEFT]);
+    $section->addText("IMF : " . number_format($calc_imf, 0, ',', ' ') . " MRU ", ['bold' => true], ['align' => Jc::LEFT]);
+    $section->addText("ITS : " , null, ['align' => Jc::LEFT]);
+    $section->addText("CNAM : ", null, ['align' => Jc::LEFT]);
+    $section->addText("NET : " . number_format($net, 0, ',', ' ') . " MRU", ['bold' => true], ['align' => Jc::LEFT]);
 
-        }
+    // Date et signatures
+    $section->addTextBreak(1);
+    $date = Carbon::parse($paiement->date_paiement)->format('d/m/Y');
+    $section->addText("La date : " . $date, ['bold' => true], ['align' => Jc::RIGHT]);
+    $section->addText("La Comptable", null, ['align' => Jc::LEFT]);
+    $section->addText("Le Directeur", null, ['align' => Jc::RIGHT]);
+
+    // Enregistrement et téléchargement du fichier
+    $fileName = 'paiement_' . $paiement->id . '.docx';
+    $filePath = storage_path('app/public/' . $fileName);
+    $phpWord->save($filePath, 'Word2007');
+
+    return response()->file($filePath, [
+        'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'Content-Disposition' => 'inline; filename="' . $fileName . '"'
+    ])->deleteFileAfterSend(true);
+}
         elseif($paiement->impulsion == 'IMF'){
 
             $phpWord = new PhpWord();
             $section = $phpWord->addSection();
-        
-            // Add content to the Word document
-            $section->addText("République Islamique de Mauritanie:", null, ['align' => Jc::LEFT]);
-            $section->addText("Honneur-Fraternité-Justice:", null, ['align' => Jc::LEFT]);
-            $section->addText("MINISTERE DE L'ENSEIGNEMENT SUPERIEUR:", null, ['align' => Jc::LEFT]);
-            $section->addText("ET DE LA RECHERCHE SCIENTIFIQUE:" , null, ['align' => Jc::LEFT]);
-            $section->addText("INSTITUT SUPERIEUR NUMERIQUE:" , null, ['align' => Jc::LEFT]);
-            $section->addText("Titre de paiement Numero:" , null, ['align' => Jc::CENTER]);
-
-            $section->addText("Imputation budgetaire: Compte principale ");
-            $section->addText("Bénéficiaire:" .$paiement->beneficiaire->nom );
-            $section->addText("Montant: " . $paiement->montant);
-            $section->addText("Montant en lettres: " . $this->convertirMontantEnLettres($paiement->montant));
-
-            $section->addText("Mode de Paiement: " . $paiement->mode_paiement);
-
             $TTC = $paiement->montant;
             $calc_imf = $TTC * $imf;
             $net = $TTC - $calc_imf;
+ // En-tête
+ $section->addText("République Islamique de Mauritanie", ['bold' => true], ['align' => Jc::CENTER]);
+ $section->addText("Honneur – Fraternité – Justice", ['bold' => true], ['align' => Jc::CENTER]);
+ $section->addText("MINISTERE DE L'ENSEIGNEMENT SUPERIEUR", ['bold' => true], ['align' => Jc::CENTER]);
+ $section->addText("ET DE LA RECHERCHE SCIENTIFIQUE", ['bold' => true], ['align' => Jc::CENTER]);
+ $section->addText("INSTITUT SUPÉRIEUR NUMÉRIQUE", ['bold' => true], ['align' => Jc::CENTER]);
+ $section->addText("Titre de paiement N° " . $paiement->id . "/" .$this-> afficherAnneeActuelle(), ['bold' => true, 'underline' => 'single'], ['align' => Jc::CENTER]);
 
-            $section->addText("TVA: ");
-            $section->addText("IMF: " .$calc_imf);
-            $section->addText("ITS: ");
-            $section->addText("CNAM: ");
-            $section->addText("NET: " .$net);
-            
-            $section->addText("La date: " . $paiement->date_paiement);
-            $section->addText("Le Directeur", ['align' => Jc::RIGHT]);
-            $section->addText("Le Comptable", ['align' => Jc::LEFT]);
+ // Corps
+ $section->addText("Imputation budgétaire : Compte Principale :"." " .$this->afficherDeuxPremiersChiffres($paiement->compte->numero)." ". "SOUS Compte "." ". $paiement->compte->numero, ['bold' => true], ['align' => Jc::LEFT]);
+ $section->addText("Bénéficiaire : " . $paiement->beneficiaire->nom." ". $paiement->beneficiaire->prenom, ['bold' => true], ['align' => Jc::LEFT]);
+ $section->addText("Montant (en chiffres) : " . number_format($paiement->montant, 0, ',', ' ') . " MRU", ['bold' => true], ['align' => Jc::LEFT]);
+ $section->addText("Montant (en lettres) : " . $this->convertirMontantEnLettres($paiement->montant) . " MRU", ['bold' => true], ['align' => Jc::LEFT]);
+ $section->addText("Mode de paiement : "." ".$paiement->mode_paiement, null, ['align' => Jc::LEFT]);
+ $section->addText("Montant brut : " . $this->convertirMontantEnLettres($paiement->montant) . " MRU", ['bold' => true], ['align' => Jc::LEFT]);
+ $section->addText("Motive de la dépense : "." " .$paiement->motif_de_la_depence, ['bold' => true], ['align' => Jc::LEFT]);
 
-            $fileName = 'paiement_' . $paiement->id . '.docx';
-            $filePath = storage_path('app/public/' . $fileName);
-            $phpWord->save($filePath, 'Word2007');
+    // Taxes
+    $section->addText("TVA : ", null, ['align' => Jc::LEFT]);
+    $section->addText("IMF : " . number_format($calc_imf, 0, ',', ' ') . " MRU ", ['bold' => true], ['align' => Jc::LEFT]);
+    $section->addText("ITS : " , null, ['align' => Jc::LEFT]);
+    $section->addText("CNAM : ", null, ['align' => Jc::LEFT]);
+    $section->addText("NET : " . number_format($net, 0, ',', ' ') . " MRU", ['bold' => true], ['align' => Jc::LEFT]);
 
-            // Envoyer le fichier Word pour l'ouvrir dans le navigateur
-            return response()->file($filePath, [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'Content-Disposition' => 'inline; filename="' . $fileName . '"'
-            ])->deleteFileAfterSend(true);  // Suppression du fichier après l'envoi
+    // Date et signatures
+    $section->addTextBreak(1);
+    $date = Carbon::parse($paiement->date_paiement)->format('d/m/Y');
+    $section->addText("La date : " . $date, ['bold' => true], ['align' => Jc::RIGHT]);
+    $section->addText("La Comptable", null, ['align' => Jc::LEFT]);
+    $section->addText("Le Directeur", null, ['align' => Jc::RIGHT]);
 
-        }
+    // Enregistrement et téléchargement du fichier
+    $fileName = 'paiement_' . $paiement->id . '.docx';
+    $filePath = storage_path('app/public/' . $fileName);
+    $phpWord->save($filePath, 'Word2007');
+
+    return response()->file($filePath, [
+        'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'Content-Disposition' => 'inline; filename="' . $fileName . '"'
+    ])->deleteFileAfterSend(true);
+}
 
         elseif($paiement->impulsion == 'Loyer'){
             $phpWord = new PhpWord();
             $section = $phpWord->addSection();
-        
-            // Add content to the Word document
-            $section->addText("République Islamique de Mauritanie:", null, ['align' => Jc::LEFT]);
-            $section->addText("Honneur-Fraternité-Justice:", null, ['align' => Jc::LEFT]);
-            $section->addText("MINISTERE DE L'ENSEIGNEMENT SUPERIEUR:", null, ['align' => Jc::LEFT]);
-            $section->addText("ET DE LA RECHERCHE SCIENTIFIQUE:" , null, ['align' => Jc::LEFT]);
-            $section->addText("INSTITUT SUPERIEUR NUMERIQUE:" , null, ['align' => Jc::LEFT]);
-            $section->addText("Titre de paiement Numero:" , null, ['align' => Jc::CENTER]);
-
-            $section->addText("Imputation budgetaire: Compte principale ");
-            $section->addText("Bénéficiaire: ");
-            $section->addText("Montant: " . $paiement->montant);
-            $section->addText("Montant en lettres: " . $this->convertirMontantEnLettres($paiement->montant));
-
-            $section->addText("Mode de Paiement: " . $paiement->mode_paiement);
-            
-            
-
             $calc_pl = ($paiement->montant) * $pl;
             $calc_cf = ($paiement->montant) * $cf;
             $calc_irf = ($paiement->montant) * $irf;
-
             $net = ($paiement->montant) - ($calc_pl + $calc_cf + $calc_irf);
 
-            $section->addText("TVA: " );
-            $section->addText("PL: " .$calc_pl);
-            $section->addText("CF: " .$calc_cf);
-            $section->addText("IRF: " .$calc_irf);
-            $section->addText("NET: " .$net);
-            $section->addText("La date: " . $paiement->date_paiement);
-            $section->addText("Le Directeur", ['align' => Jc::RIGHT]);
-            $section->addText("Le Comptable", ['align' => Jc::LEFT]);
+  // En-tête
+  $section->addText("République Islamique de Mauritanie", ['bold' => true], ['align' => Jc::CENTER]);
+  $section->addText("Honneur – Fraternité – Justice", ['bold' => true], ['align' => Jc::CENTER]);
+  $section->addText("MINISTERE DE L'ENSEIGNEMENT SUPERIEUR", ['bold' => true], ['align' => Jc::CENTER]);
+  $section->addText("ET DE LA RECHERCHE SCIENTIFIQUE", ['bold' => true], ['align' => Jc::CENTER]);
+  $section->addText("INSTITUT SUPÉRIEUR NUMÉRIQUE", ['bold' => true], ['align' => Jc::CENTER]);
+  $section->addText("Titre de paiement N° " . $paiement->id . "/" .$this-> afficherAnneeActuelle(), ['bold' => true, 'underline' => 'single'], ['align' => Jc::CENTER]);
 
-            // Save the Word document
-            $fileName = 'paiement_' . $paiement->id . '.docx';
-            $filePath = storage_path('app/public/' . $fileName);
-            $phpWord->save($filePath, 'Word2007');
+  // Corps
+  $section->addText("Imputation budgétaire : Compte Principale :"." " .$this->afficherDeuxPremiersChiffres($paiement->compte->numero)." ". "SOUS Compte "." ". $paiement->compte->numero, ['bold' => true], ['align' => Jc::LEFT]);
+  $section->addText("Bénéficiaire : " . $paiement->beneficiaire->nom." ". $paiement->beneficiaire->prenom, ['bold' => true], ['align' => Jc::LEFT]);
+  $section->addText("Montant (en chiffres) : " . number_format($paiement->montant, 0, ',', ' ') . " MRU", ['bold' => true], ['align' => Jc::LEFT]);
+  $section->addText("Montant (en lettres) : " . $this->convertirMontantEnLettres($paiement->montant) . " MRU", ['bold' => true], ['align' => Jc::LEFT]);
+  $section->addText("Mode de paiement : "." ".$paiement->mode_paiement, null, ['align' => Jc::LEFT]);
+  $section->addText("Montant brut : " . $this->convertirMontantEnLettres($paiement->montant) . " MRU", ['bold' => true], ['align' => Jc::LEFT]);
+  $section->addText("Motive de la dépense : "." " .$paiement->motif_de_la_depence, ['bold' => true], ['align' => Jc::LEFT]);
 
-            // Envoyer le fichier Word pour l'ouvrir dans le navigateur
-            return response()->file($filePath, [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'Content-Disposition' => 'inline; filename="' . $fileName . '"'
-            ])->deleteFileAfterSend(true);  // Suppression du fichier après l'envoi
-        }
+    // Taxes
+    $section->addText("TVA : ", null, ['align' => Jc::LEFT]);
+    $section->addText("PL : " . number_format($calc_pl, 0, ',', ' ') . " MRU ", ['bold' => true], ['align' => Jc::LEFT]);
+    $section->addText("CF : " . number_format($calc_cf, 0, ',', ' ') . " MRU ", ['bold' => true], ['align' => Jc::LEFT]);
+    $section->addText("IRF : ". number_format($calc_irf, 0, ',', ' ') . " MRU ",['bold' => true], ['align' => Jc::LEFT]);
+    $section->addText("NET : " . number_format($net, 0, ',', ' ') . " MRU", ['bold' => true], ['align' => Jc::LEFT]);
 
+    // Date et signatures
+    $section->addTextBreak(1);
+    $date = Carbon::parse($paiement->date_paiement)->format('d/m/Y');
+    $section->addText("La date : " . $date, ['bold' => true], ['align' => Jc::RIGHT]);
+    $section->addText("La Comptable", null, ['align' => Jc::LEFT]);
+    $section->addText("Le Directeur", null, ['align' => Jc::RIGHT]);
+
+    // Enregistrement et téléchargement du fichier
+    $fileName = 'paiement_' . $paiement->id . '.docx';
+    $filePath = storage_path('app/public/' . $fileName);
+    $phpWord->save($filePath, 'Word2007');
+
+    return response()->file($filePath, [
+        'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'Content-Disposition' => 'inline; filename="' . $fileName . '"'
+    ])->deleteFileAfterSend(true);
+}
         else{
             $phpWord = new PhpWord();
             $section = $phpWord->addSection();
             
-                // Add content to the Word document
-            $section->addText("République Islamique de Mauritanie:", null, ['align' => Jc::LEFT]);
-            $section->addText("Honneur-Fraternité-Justice:", null, ['align' => Jc::LEFT]);
-            $section->addText("MINISTERE DE L'ENSEIGNEMENT SUPERIEUR:", null, ['align' => Jc::LEFT]);
-            $section->addText("ET DE LA RECHERCHE SCIENTIFIQUE:" , null, ['align' => Jc::LEFT]);
-            $section->addText("INSTITUT SUPERIEUR NUMERIQUE:" , null, ['align' => Jc::LEFT]);
-            $section->addText("Titre de paiement Numero:" , null, ['align' => Jc::CENTER]);
-    
-            $section->addText("Imputation budgetaire: Compte principale ");
-            $section->addText("Bénéficiaire: ");
-            $section->addText("Montant: " . $paiement->montant);
-            $section->addText("Montant en lettres: " . $this->convertirMontantEnLettres($paiement->montant));
-    
-            $section->addText("Mode de Paiement: " . $paiement->mode_paiement);
-            
-            $section->addText("TVA: ");
-            $section->addText("PL: ");
-            $section->addText("CF: ");
-            $section->addText("IRF: ");
-            $section->addText("NET: " .$paiement->montant);
+           
+    // En-tête
+    $section->addText("République Islamique de Mauritanie", ['bold' => true], ['align' => Jc::CENTER]);
+    $section->addText("Honneur – Fraternité – Justice", ['bold' => true], ['align' => Jc::CENTER]);
+    $section->addText("MINISTERE DE L'ENSEIGNEMENT SUPERIEUR", null, ['align' => Jc::CENTER]);
+    $section->addText("ET DE LA RECHERCHE SCIENTIFIQUE", null, ['align' => Jc::CENTER]);
+    $section->addText("INSTITUT SUPÉRIEUR NUMÉRIQUE", ['bold' => true], ['align' => Jc::CENTER]);
+    $section->addText("Titre de paiement N° " . $paiement->id . "/" .$this-> afficherAnneeActuelle(), ['bold' => true, 'underline' => 'single'], ['align' => Jc::CENTER]);
 
-            
-                
-            $section->addText("La date: " . $paiement->date_paiement);
-            $section->addText("Le Directeur", ['align' => Jc::RIGHT]);
-            $section->addText("Le Comptable", ['align' => Jc::LEFT]);
+    // Corps
+    $section->addText("Imputation budgétaire : Compte Principale :"." " .$this->afficherDeuxPremiersChiffres($paiement->compte->numero)." ". "SOUS Compte "." ". $paiement->compte->numero, null, ['align' => Jc::LEFT]);
+    $section->addText("Bénéficiaire : " . $paiement->beneficiaire->nom, null, ['align' => Jc::LEFT]);
+    $section->addText("Montant (en chiffres) : " . number_format($paiement->montant, 0, ',', ' ') . " MRU", ['bold' => true], ['align' => Jc::LEFT]);
+    $section->addText("Montant (en lettres) : " . $this->convertirMontantEnLettres($paiement->montant) . " MRU", ['bold' => true], ['align' => Jc::LEFT]);
+    $section->addText("Mode de paiement : Virement bancaire", null, ['align' => Jc::LEFT]);
+    $section->addText("Montant brut : " . $this->convertirMontantEnLettres($paiement->montant) . " MRU", ['bold' => true], ['align' => Jc::LEFT]);
 
-            $fileName = 'paiement_' . $paiement->id . '.docx';
-            $filePath = storage_path('app/public/' . $fileName);
-            $phpWord->save($filePath, 'Word2007');
+    // Taxes
+    $section->addText("TVA : ", ['bold' => true], ['align' => Jc::LEFT]);
+    $section->addText("IMF : " , ['bold' => true], ['align' => Jc::LEFT]);
+    $section->addText("ITS : " , null, ['align' => Jc::LEFT]);
+    $section->addText("CNAM : ", null, ['align' => Jc::LEFT]);
+    $section->addText("NET : " . number_format($paiement->montant, 0, ',', ' ') . " MRU", ['bold' => true], ['align' => Jc::LEFT]);
 
-            // Envoyer le fichier Word pour l'ouvrir dans le navigateur
-            return response()->file($filePath, [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'Content-Disposition' => 'inline; filename="' . $fileName . '"'
-            ])->deleteFileAfterSend(true);  // Suppression du fichier après l'envoi
+    // Date et signatures
+    $section->addTextBreak(1);
+    $date = Carbon::parse($paiement->date_paiement)->format('d/m/Y');
+    $section->addText("La date : " . $date, ['bold' => true], ['align' => Jc::RIGHT]);
+    $section->addText("La Comptable", null, ['align' => Jc::LEFT]);
+    $section->addText("Le Directeur", null, ['align' => Jc::RIGHT]);
 
-            
-        }
+    // Enregistrement et téléchargement du fichier
+    $fileName = 'paiement_' . $paiement->id . '.docx';
+    $filePath = storage_path('app/public/' . $fileName);
+    $phpWord->save($filePath, 'Word2007');
+
+    return response()->file($filePath, [
+        'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'Content-Disposition' => 'inline; filename="' . $fileName . '"'
+    ])->deleteFileAfterSend(true);
+}
+        
 
     }
 

@@ -23,6 +23,7 @@
     <table class="table mt-4">
         <thead>
             <tr>
+                <th>#</th>
                 <th>Montant</th>
                 <th>Date de Paiement</th>
                 <th>Mode de Paiement</th>
@@ -37,6 +38,7 @@
         <tbody>
             @foreach ($paiements as $paiement)
             <tr>
+                <td>{{ $paiement->id }}</td>
                 <td>{{ $paiement->montant }}</td>
                 <td>{{ \Carbon\Carbon::parse($paiement->date_paiement)->format('Y-m-d') }}</td>
                 <td>{{ $paiement->mode_paiement }}</td>

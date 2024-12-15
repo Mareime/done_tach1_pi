@@ -8,16 +8,32 @@
         @csrf
         @method('PUT')
 
-        <!-- Pourcentage de taxe -->
+        <!-- Nom de la taxe -->
         <div class="row mb-3">
-            <label for="taxe" class="col-md-3 col-form-label text-md-end">Pourcentage de Taxe</label>
+            <label for="nom" class="col-md-3 col-form-label text-md-end">Nom de la Taxe</label>
             <div class="col-md-6">
                 <input 
                     type="text" 
-                    name="taxe" 
-                    id="taxe" 
+                    name="nom" 
+                    id="nom" 
                     class="form-control" 
-                    value="{{ $taxes->pourcentage }}" 
+                    value="{{ old('nom', $taxes->nom) }}" 
+                    required
+                    placeholder="Exemple : TVA"
+                >
+            </div>
+        </div>
+
+        <!-- Pourcentage de la taxe -->
+        <div class="row mb-3">
+            <label for="pourcentage" class="col-md-3 col-form-label text-md-end">Pourcentage de la Taxe</label>
+            <div class="col-md-6">
+                <input 
+                    type="number" 
+                    name="pourcentage" 
+                    id="pourcentage" 
+                    class="form-control" 
+                    value="{{ old('pourcentage', $taxes->pourcentage) }}" 
                     required
                     placeholder="Exemple : 20"
                 >

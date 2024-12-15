@@ -38,19 +38,23 @@ class TaxeController extends Controller
         return redirect()->route('taxes.index')->with('success', 'Taxe ajoutée avec succès.');
     }
     
-
     public function update(Request $request, $id)
     {
         $request->validate([
-            'taxe' => 'required|numeric|min:0|max:100', 
+            'pourcentage' => 'required|numeric|min:0|max:100',
+            'nom' => 'required|string',
         ]);
     
         $taxe = Taxe::findOrFail($id);
     
-        $taxe->pourcentage = $request->taxe;
-        $taxe->save();  
+        
+        $taxe->nom = $request->nom; 
+        $taxe->pourcentage = $request->pourcentage;
+        $taxe->save();
+  
         return redirect()->route('taxes.index')->with('success', 'La taxe a été mise à jour avec succès.');
     }
+    
     public function destroy($id)
 {
     $taxe = Taxe::findOrFail($id); 

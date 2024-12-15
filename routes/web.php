@@ -45,6 +45,7 @@ Route::delete('/beneficiaires/{beneficiaire}', [beneficiaireController::class, '
 // Routes pour les paiements
 Route::resource('paiements', PaiementController::class);
 Route::get('paiements/create',[PaiementController::class,'create'])->name('paiement.create');
+Route::post('/paiements',[PaiementController::class,'store'])->name('paiements.store');
 
 
 

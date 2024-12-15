@@ -18,6 +18,7 @@ class Paiement extends Model
         'mode_paiement',
         'id_compte',
         'id_beneficiaire',
+        'impulsion',
         'status',
     ];
 

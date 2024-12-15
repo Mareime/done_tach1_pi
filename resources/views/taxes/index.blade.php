@@ -13,7 +13,7 @@
 
     <div class="mb-3 text-end">
         <a href="{{ route('taxes.create') }}" class="btn btn-warning btn-sm">Ajouter une Taxe</a>
-        <a href="{{ route('taxes.export') }}" class="btn btn-primary btn-sm">Exporter</a>
+        {{-- <a href="{{ route('taxes.export') }}" class="btn btn-primary btn-sm">Exporter</a> --}}
     </div>
     <div class="mb-3">
         <form action="{{ route('taxes.import') }}" method="POST" enctype="multipart/form-data">
