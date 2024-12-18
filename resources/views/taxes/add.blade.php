@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+
+@if (Session::has('user_id'))<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -54,3 +55,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+@else
+<script>
+    window.location.href = "{{ route('connexion.form') }}";
+</script>
+@endif

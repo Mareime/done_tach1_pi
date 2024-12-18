@@ -59,10 +59,6 @@ class PaiementController extends Controller
         return redirect()->route('paiements.index')->with('success', 'Paiement ajouté avec succès!');
     }
   
-    
-
-    
-
     public function edit($id)
     {
         $paiement = Paiement::findOrFail($id);
@@ -221,7 +217,7 @@ function afficherAnneeActuelle() {
     $TCC = $paiement->montant;
     $HT = round($TCC / (1 + $tva), 2);
     $calc_tva = round(($tva * $TCC) / (1 + $tva), 1);
-    $calc_imf = round($TCC * $imf, 2);
+    $calc_imf = round($HT * $imf, 2);
     $net = round($TCC - ($calc_tva + $calc_imf), 1);
     
 
@@ -271,7 +267,8 @@ function afficherAnneeActuelle() {
             $phpWord = new PhpWord();
             $section = $phpWord->addSection();
             $TTC = $paiement->montant;
-            $calc_imf = $TTC * $imf;
+            $HT = round($TTC / (1 + $tva), 2);
+            $calc_imf = $HT * $imf;
             $net = $TTC - $calc_imf;
  // En-tête
  $section->addText("République Islamique de Mauritanie", ['bold' => true], ['align' => Jc::CENTER]);

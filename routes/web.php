@@ -5,10 +5,14 @@ use App\Http\Controllers\beneficiaireController;
 use App\Http\Controllers\PaiementController;
 use App\Http\Controllers\TaxeController;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\controleruser;
+// Route to display the login form (GET request)
 Route::get('/', function () {
-    return view('paiements.welcome');
-});
+    return view('connexion.connexion');
+})->name('connexion.form');
+
+// Route to handle the login submission (POST request)
+Route::post('/connexion', [ControlerUser::class, 'Verifie_User_existe'])->name('connexion');
 
 // Exportation des comptes
 // Route::get('compt/export', [CompteController::class, 'export'])->name('compt.export');
@@ -47,6 +51,8 @@ Route::resource('paiements', PaiementController::class);
 Route::get('paiements/create',[PaiementController::class,'create'])->name('paiement.create');
 Route::post('/paiements',[PaiementController::class,'store'])->name('paiements.store');
 
+// // connexion
+// Route::post('/connexion', [ControlerUser::class, 'Verifie_User_existe'])->name('connexion');
 
 
 // Routes poue les Taxes
@@ -58,3 +64,5 @@ Route::delete('/taxes/{id}', [TaxeController::class, 'destroy'])->name('taxes.de
 Route::post('/taxes/import', [TaxeController::class, 'import'])->name('taxes.import'); // Importation des taxes
 Route::get('/taxes/export', [TaxeController::class, 'export'])->name('taxes.export'); // Exportation des taxes
 Route::resource('taxes', TaxeController::class)->except(['show']);
+// Auth
+// Route::get('/comptes/{user_id?}', [CompteController::class, 'index'])->name('compte.index');
