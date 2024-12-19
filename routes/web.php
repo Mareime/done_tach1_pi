@@ -7,13 +7,11 @@ use App\Http\Controllers\TaxeController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\controleruser;
 // Route to display the login form (GET request)
-Route::get('/', function () {
-    return view('connexion.connexion');
-})->name('connexion.form');
+Route::get('/login', function () {
+    return view('auth.login');
+})->name('login');
 
-// Route to handle the login submission (POST request)
-Route::post('/connexion', [ControlerUser::class, 'Verifie_User_existe'])->name('connexion');
-
+Route::post('/login', [ControlerUser::class, 'Verifie_User_existe'])->name('connexion');
 // Exportation des comptes
 // Route::get('compt/export', [CompteController::class, 'export'])->name('compt.export');
 Route::get('beneficiaire/export', [beneficiaireController::class, 'export'])->name('beneficiaire.export');
@@ -31,20 +29,23 @@ Route::get('beneficiaire/export', [beneficiaireController::class, 'export'])->na
 // Importation des comptes
 Route::post('comptes/import', [CompteController::class, 'import'])->name('compte.import');
 Route::post('beneficiaire/import', [beneficiaireController::class, 'import'])->name('beneficiaire.import');
-
-Route::get('/comptes', [CompteController::class, 'index'])->name('compte.index');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/compte', function () {
+        return view('compte.index'); // Page protégée
+    })->name('compte.index');
+});
 Route::get('/comptes/create', [CompteController::class, 'create'])->name('compte.create');
 Route::post('/comptes', [CompteController::class, 'store'])->name('compte.store');
 Route::get('/comptes/{compte}/edit', [CompteController::class, 'edit'])->name('compte.edit');
 Route::put('/comptes/{compte}', [CompteController::class, 'update'])->name('compte.update');
 Route::delete('/comptes/{compte}', [CompteController::class, 'destroy'])->name('compte.destroy');
 // pour la table beneficaire
-Route::get('/beneficiaires', [beneficiaireController::class, 'index'])->name('beneficiaire.index');
-Route::get('/beneficiaires/create', [beneficiaireController::class, 'create'])->name('beneficiaire.create');
-Route::post('/beneficiaires', [beneficiaireController::class, 'store'])->name('beneficiaire.store');
-Route::get('/beneficiaires/{beneficiaire}/edit', [beneficiaireController::class, 'edit'])->name('beneficiaire.edit');
-Route::put('/beneficiaires/{beneficiaire}', [beneficiaireController::class, 'update'])->name('beneficiaire.update');
-Route::delete('/beneficiaires/{beneficiaire}', [beneficiaireController::class, 'destroy'])->name('beneficiaire.destroy');
+// Route::get('/beneficiaires', [beneficiaireController::class, 'index'])->name('beneficiaire.index');
+// Route::get('/beneficiaires/create', [beneficiaireController::class, 'create'])->name('beneficiaire.create');
+// Route::post('/beneficiaires', [beneficiaireController::class, 'store'])->name('beneficiaire.store');
+// Route::get('/beneficiaires/{beneficiaire}/edit', [beneficiaireController::class, 'edit'])->name('beneficiaire.edit');
+// Route::put('/beneficiaires/{beneficiaire}', [beneficiaireController::class, 'update'])->name('beneficiaire.update');
+// Route::delete('/beneficiaires/{beneficiaire}', [beneficiaireController::class, 'destroy'])->name('beneficiaire.destroy');
 
 // Routes pour les paiements
 Route::resource('paiements', PaiementController::class);
@@ -65,4 +66,13 @@ Route::post('/taxes/import', [TaxeController::class, 'import'])->name('taxes.imp
 Route::get('/taxes/export', [TaxeController::class, 'export'])->name('taxes.export'); // Exportation des taxes
 Route::resource('taxes', TaxeController::class)->except(['show']);
 // Auth
-// Route::get('/comptes/{user_id?}', [CompteController::class, 'index'])->name('compte.index');
+// z
+Route::get('/get-user-id', [controleruser::class, 'getUserId'])->name('getUserId');
+Route::middleware(['checkSession'])->group(function () {
+    Route::get('/beneficiaires', [BeneficiaireController::class, 'index'])->name('beneficiaire.index');
+    Route::get('/beneficiaires/create', [BeneficiaireController::class, 'create'])->name('beneficiaire.create');
+    Route::post('/beneficiaires', [BeneficiaireController::class, 'store'])->name('beneficiaire.store');
+    Route::get('/beneficiaires/{beneficiaire}/edit', [BeneficiaireController::class, 'edit'])->name('beneficiaire.edit');
+    Route::put('/beneficiaires/{beneficiaire}', [BeneficiaireController::class, 'update'])->name('beneficiaire.update');
+    Route::delete('/beneficiaires/{beneficiaire}', [BeneficiaireController::class, 'destroy'])->name('beneficiaire.destroy');
+});

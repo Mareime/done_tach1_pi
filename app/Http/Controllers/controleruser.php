@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
-use App\Models\usermodel;
 
 class controleruser extends Controller
 {
+    // Vérifie si l'utilisateur existe et connecte
     public function Verifie_User_existe(Request $request)
     {
         // Validation des données d'entrée
@@ -17,16 +17,30 @@ class controleruser extends Controller
             'password' => 'required|min:6',
         ]);
 
-        // Recherchez l'utilisateur
-        $user = usermodel::where('email', $request->email)->where('password', $request->password)->first();
-        if ($user) {
-            Session::put('user_id', $user->id);
-            // Rediriger vers la page "compte"
-            return redirect()->route('compte.index')->with('success_connected', 'Connexion réussie.');
+        // Tentative d'authentification
+        if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
+            // Si l'authentification réussit, rediriger vers la page protégée
+            return redirect()->route('compte.index')->with('success', 'Connexion réussie.');
+        }
+
+        // Retourner une erreur si l'authentification échoue
+        return redirect()->back()->withErrors([
+            'email' => 'Email ou mot de passe incorrect.',
+        ]);
+    }
+
+    // Vérifie si l'utilisateur est connecté
+    public function getUserId()
+    {
+        if (Auth::check()) {
+            return response()->json([
+                'status' => 'success',
+                'user_id' => Auth::id(),
+            ]);
         } else {
-            // Retourner une erreur
-            return redirect()->back()->withErrors([
-                'email' => 'Email ou mot de passe incorrect.',
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Utilisateur non connecté.',
             ]);
         }
     }

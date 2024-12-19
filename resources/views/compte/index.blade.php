@@ -1,4 +1,4 @@
-@if (Session::has('user_id'))
+@if (Session::get('user_id'))
 @extends('layouts.app')
 
 @section('content')
