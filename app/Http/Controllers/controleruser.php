@@ -2,46 +2,62 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\usermodel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Hash;
 
 class controleruser extends Controller
 {
-    // Vérifie si l'utilisateur existe et connecte
-    public function Verifie_User_existe(Request $request)
+  
+    public function showLoginForm()
     {
-        // Validation des données d'entrée
+        // Assurez-vous que la vue connexion.connexion existe
+        return view('connexion.connexion');
+    }
+
+    public function home()
+    {
+        return view("connexion.home");
+    }
+    
+    public function login(Request $request)
+    {
+        // Validation des champs
         $request->validate([
             'email' => 'required|email',
             'password' => 'required|min:6',
         ]);
-
-        // Tentative d'authentification
+    
+        // Tentative de connexion
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
-            // Si l'authentification réussit, rediriger vers la page protégée
-            return redirect()->route('compte.index')->with('success', 'Connexion réussie.');
+            // Régénérer la session pour éviter les attaques de fixation de session
+            $request->session()->regenerate();
+    
+            // Redirection vers la page d'accueil
+            return redirect()->route('compte.index')->with('success', 'Vous avez été connecté avec succès.');
         }
-
-        // Retourner une erreur si l'authentification échoue
-        return redirect()->back()->withErrors([
-            'email' => 'Email ou mot de passe incorrect.',
+    
+        // Retour en arrière avec une erreur si la connexion échoue
+        return back()->withErrors([
+            'email' => 'Les informations de connexion sont incorrectes.',
         ]);
     }
+    
+    
 
-    // Vérifie si l'utilisateur est connecté
-    public function getUserId()
+   
+    public function logout(Request $request)
     {
-        if (Auth::check()) {
-            return response()->json([
-                'status' => 'success',
-                'user_id' => Auth::id(),
-            ]);
-        } else {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Utilisateur non connecté.',
-            ]);
-        }
+        
+        Auth::logout();
+
+   
+        $request->session()->invalidate();
+
+
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login')->with('success', 'Vous avez été déconnecté avec succès.');
     }
 }

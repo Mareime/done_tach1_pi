@@ -1,4 +1,4 @@
-@if (Session::get('user_id'))
+
 @extends('layouts.app')
 
 @section('content')
@@ -84,9 +84,3 @@
 </div>
 @endsection
 
-    
-@else
-<script>
-    window.location.href = "{{ route('connexion.form') }}";
-</script>
-@endif

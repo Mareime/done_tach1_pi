@@ -1,5 +1,5 @@
 
-@if (Session::has('user_id'))
+{{-- @if (Session::has('user_id')) --}}
 @extends('layouts.app')
 
 @section('content')
@@ -18,8 +18,9 @@
     <div class="mb-3">
         <a href="{{ route('paiement.create') }}" class="btn btn-primary">Ajouter un Paiement</a>
     </div>
-    {{-- <a href="{{ route('paiements.export', ['id' => $paiement->id] ) }}" class="btn btn-success">Exporter </a>
-    <a href="{{ route('paiements.import', ['id' => $paiement->id] ) }}" class="btn btn-success">Importer</a> --}}
+    {{-- <a href="{{ route('paiements.export', ['id' => $paiement->id] ) }}" class="btn btn-success">Exporter </a> --}}
+    {{-- <a href="{{ route('paiements.import', ['id' => $paiement->id] ) }}" class="btn btn-success">Importer</a> --}}
+    
     <table class="table mt-4">
         <thead>
             <tr>
@@ -63,8 +64,8 @@
 </div>
 
 @endsection
-@else
+{{-- @else
 <script>
     window.location.href = "{{ route('connexion.form') }}";
 </script>
-@endif
+@endif --}}

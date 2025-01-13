@@ -7,11 +7,20 @@ use App\Models\Compte;
 use App\Exports\ComptesExport;
 use App\Imports\ComptesImport;
 use Maatwebsite\Excel\Facades\Excel;
-
+use Illuminate\Routing\Controller;
 class CompteController extends Controller
 {
+     // if (auth()->guest()) {
+        //     return redirect()->route('login');
+        // }
+
     public function index()
     {
+        // var_dump(auth()->guest());
+        if (auth()->guest()) {
+            return redirect()->route('login');
+        }
+
         $comptes = Compte::all();
         return view('compte.index', compact('comptes'));
     }

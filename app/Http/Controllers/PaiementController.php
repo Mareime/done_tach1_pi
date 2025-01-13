@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Facades\DB;
 use App\Models\Paiement;
 use App\Models\Compte;
 use App\Models\Beneficiaire;
@@ -21,6 +21,9 @@ class PaiementController extends Controller
 {
     public function index()
     {
+        if (auth()->guest()) {
+            return redirect()->route('login');
+        }
         $paiements = Paiement::all();
         return view('paiements.index', compact('paiements'));
     }
@@ -410,5 +413,55 @@ function afficherAnneeActuelle() {
 
     }
 
+    public function showLastIdPerYear()
+    {
+        // Récupérer les derniers paiements par année
+        $paiements = DB::table('paiement')
+            ->select(DB::raw('YEAR(date_paiement) as year'), DB::raw('MAX(id) as last_id'))
+            ->groupBy(DB::raw('YEAR(date_paiement)'))
+            ->get();
     
+        // Calculer la prochaine ID pour chaque année
+        $paiements = $paiements->map(function ($paiement) {
+            $paiement->next_id = $paiement->last_id + 1;
+            return $paiement;
+        });
+    
+        return view('paiements.updateNextId', compact('paiements'));
+    }
+    
+
+    public function updateNextId(Request $request)
+    {
+        // Validation des données
+        $request->validate([
+            'year' => 'required|integer',
+            'next_id' => 'required|integer|min:1',
+        ]);
+    
+        // Récupérer les valeurs du formulaire
+        $year = $request->input('year');
+        $newNextId = $request->input('next_id');
+    
+        // Vérifier que la nouvelle ID est supérieure à la dernière ID pour cette année
+        $currentMaxId = DB::table('paiement')
+            ->whereYear('date_paiement', $year)
+            ->max('id') ?? 0;
+    
+        if ($newNextId <= $currentMaxId) {
+            return redirect()->route('paiement.showLastIdPerYear')
+                ->with('error', "La nouvelle ID doit être supérieure à l'ID maximum actuel pour l'année $year ($currentMaxId).");
+        }
+    
+        try {
+            // Mettre à jour la prochaine ID dans la table
+            DB::statement("ALTER TABLE paiement AUTO_INCREMENT = $newNextId");
+    
+            return redirect()->route('paiement.showLastIdPerYear')
+                ->with('success', "La prochaine ID pour l'année $year a été mise à jour à $newNextId.");
+        } catch (\Exception $e) {
+            return redirect()->route('paiement.showLastIdPerYear')
+                ->with('error', "Une erreur est survenue lors de la mise à jour de la prochaine ID : " . $e->getMessage());
+        }
+    }
 }

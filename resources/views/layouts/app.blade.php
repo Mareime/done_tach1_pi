@@ -33,6 +33,12 @@
                     <li class="nav-item">
                         <a class="nav-link active" href="{{ route('taxes.index')}}">Taxes</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ route('logout')}}">Deconnexion</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ route('paiement.NextId')}}">Paiement/Annee</a>
+                    </li>
                 </ul>
             </div>
         </div>
