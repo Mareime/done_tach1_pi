@@ -5,7 +5,7 @@
 <div class="container">
     <h1>Éditer le Paiement</h1>
 
-    <form action="{{ route('paiements.update', $paiement->id) }}" method="POST">
+    <form action="{{ route('paiements.update1', [$paiement->id, $paiement->annee]) }}" method="POST">
         @csrf
         @method('PUT')
 

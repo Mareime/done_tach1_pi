@@ -16,11 +16,17 @@ class CompteController extends Controller
 
     public function index()
     {
+<<<<<<< HEAD
         // var_dump(auth()->guest());
         if (auth()->guest()) {
             return redirect()->route('login');
         }
 
+=======
+        if (auth()->guest()) {
+            return redirect()->route('login');
+        }
+>>>>>>> master
         $comptes = Compte::all();
         return view('compte.index', compact('comptes'));
     }

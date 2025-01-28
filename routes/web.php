@@ -3,6 +3,8 @@
 use App\Http\Controllers\CompteController;
 use App\Http\Controllers\beneficiaireController;
 use App\Http\Controllers\PaiementController;
+use App\Http\Controllers\CompteurController;
+
 use App\Http\Controllers\TaxeController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\controleruser;
@@ -19,14 +21,14 @@ Route::get('/home', function () {
 
 Route::get('compt/export', [CompteController::class, 'export'])->name('compt.export');
 Route::get('beneficiaire/export', [beneficiaireController::class, 'export'])->name('beneficiaire.export');
-Route::get('paiements/{id}/export', [PaiementController::class, 'export'])->name('paiements.export');
+Route::get('paiements/export', [PaiementController::class, 'export'])->name('paiements.export');
 
 // Importation des comptes
 // Exporter et importer les comptes
 Route::get('comptes/export', [CompteController::class, 'export'])->name('compte.export');
 Route::post('comptes/import', [CompteController::class, 'import'])->name('compte.import');
 Route::post('beneficiaire/import', [beneficiaireController::class, 'import'])->name('beneficiaire.import');
-Route::get('paiements/{id}/import', [PaiementController::class, 'import'])->name('paiements.import');
+Route::get('paiements/{id}/import', [PaiementController::class, 'export'])->name('paiements.import');
 
 Route::get('beneficiaire/export', [beneficiaireController::class, 'export'])->name('beneficiaire.export');
 
@@ -50,19 +52,17 @@ Route::delete('/beneficiaires/{beneficiaire}', [beneficiaireController::class, '
 
 // Routes pour les paiements
 Route::resource('paiements', PaiementController::class);
+Route::get('paiements',[PaiementController::class,'index'])->name('paiements.index');
 Route::get('paiements/create',[PaiementController::class,'create'])->name('paiement.create');
-Route::post('/paiements',[PaiementController::class,'store'])->name('paiements.store');
 
 
+
+// Routes poue les Taxes
+
+Route::resource('taxes', TaxeController::class);
+Route::get('/taxes/create', [TaxeController::class, 'create'])->name('taxes.create'); 
+Route::post('/taxes', [TaxeController::class, 'store'])->name('taxes.store');
+Route::delete('/taxes/{id}', [TaxeController::class, 'destroy'])->name('taxes.destroy');
+Route::post('/taxes/import', [TaxeController::class, 'import'])->name('taxes.import'); // Importation des taxes
+Route::get('/taxes/export', [TaxeController::class, 'export'])->name('taxes.export'); // Exportation des taxes
 Route::resource('taxes', TaxeController::class)->except(['show']);
-
-// Routes personnalisées pour import/export
-Route::post('/taxes/import', [TaxeController::class, 'import'])->name('taxes.import'); 
-Route::get('/taxes/export', [TaxeController::class, 'export'])->name('taxes.export'); 
-// });
-Route::get('/accueil', function () {
-    return view('connexion.home');
-});
-// id par annee
-Route::get('/paiements-next-id', [PaiementController::class,'showLastIdPerYear'])->name('paiement.NextId');
-Route::post('/paiement/update-next-id', [PaiementController::class, 'updateNextId'])->name('paiement.updateNextId');

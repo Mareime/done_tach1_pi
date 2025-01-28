@@ -16,7 +16,7 @@ use Kwn\NumberToWords\NumberToWords;
 use PhpOffice\PhpWord\SimpleType\Jc;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
-
+use Illuminate\Support\Facades\Validator;
 class PaiementController extends Controller
 {
     public function index()
@@ -35,6 +35,7 @@ class PaiementController extends Controller
         return view('paiements.create', compact('comptes', 'beneficiaires'));
     }
 
+<<<<<<< HEAD
     public function store(Request $request) 
     {
         $request->validate([
@@ -70,10 +71,14 @@ class PaiementController extends Controller
         return view('paiements.edit', compact('paiement', 'comptes', 'beneficiaires'));
     }
     public function update(Request $request, Paiement $paiement)
+=======
+    public function store(Request $request)
+>>>>>>> master
     {
         // Validation des données
         $request->validate([
             'montant' => 'required|numeric',
+            'date_paiement' => 'required|date',
             'mode_paiement' => 'required|in:carte,virement,cheque,espèces',
             'id_compte' => 'required|exists:compte,id',
             'id_beneficiaire' => 'required|exists:beneficiaire,id',
@@ -82,32 +87,106 @@ class PaiementController extends Controller
             'impulsion' => 'required|in:TVA,IMF,loyer,Exonéré',
         ]);
     
-        $paiement->update($request->all());
+        // Démarrer une transaction pour garantir l'intégrité des données
+        DB::beginTransaction();
     
-        // Rediriger avec un message de succès
-        return redirect()->route('paiements.index')->with('success', 'Paiement mis à jour avec succès.');
+        try {
+            $annee = date('Y', strtotime($request->date_paiement));
+    
+            // Sélectionner et verrouiller la ligne correspondante dans la table `compteur`
+            $compteur = DB::table('compteur')
+                ->where('annee', $annee)
+                ->lockForUpdate() // Verrouiller la ligne pour éviter les conflits
+                ->first();
+    
+            // Si l'année n'existe pas dans la table `compteur`, la créer avec un compteur initialisé à 1
+            if (!$compteur) {
+                $id_compt = 1;
+                DB::table('compteur')->insert([
+                    'annee' => $annee,
+                    'compteur' => $id_compt,
+                ]);
+            } else {
+                // Incrémenter le compteur
+                $id_compt = $compteur->compteur + 1;
+            }
+    
+            // Insérer le paiement avec le nouvel `id_compt`
+            Paiement::create([
+                'montant' => $request->montant,
+                'date_paiement' => $request->date_paiement,
+                'mode_paiement' => $request->mode_paiement,
+                'id_compte' => $request->id_compte,
+                'id_beneficiaire' => $request->id_beneficiaire,
+                'status' => $request->status,
+                'motif_de_la_depence' => $request->motif_de_la_depence,
+                'impulsion' => $request->impulsion,
+                
+            ]);
+    
+            // Mettre à jour le compteur dans la table `compteur`
+            DB::table('compteur')
+                ->where('annee', $annee)
+                ->update(['compteur' => $id_compt]);
+    
+            // Valider la transaction
+            DB::commit();
+    
+            return redirect()->route('paiements.index')->with('success', 'Paiement ajouté avec succès!');
+        } catch (\Exception $e) {
+            // En cas d'erreur, annuler la transaction
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Une erreur est survenue lors de l\'ajout du paiement: ' . $e->getMessage());
+        }
     }
-    
-
-
-    public function destroy($id)
+  
+    public function edit($id)
     {
-        PaiementTaxe::where('paiement_id', $id)->delete();
-    
-        // Supprimer le paiement
-        $paiement = Paiement::findOrFail($id);
-        $paiement->delete();
-    
-        return redirect()->route('paiements.index')->with('success', 'Paiement supprimé avec succès.');
-    }
-    
 
-    public function export($id)
+        $paiement = Paiement::where('id', $id)->firstOrFail();
+        $comptes = Compte::all();
+        $beneficiaires = Beneficiaire::all();
+
+        return view('paiements.edit', compact('paiement', 'comptes', 'beneficiaires'));
+}
+
+    public function update(Request $request, $id)
     {
-        $paiement = Paiement::findOrFail($id);
-        return Excel::download(new PaiementExport, 'paiements.xlsx');
+            $request->validate([
+                'montant' => 'required|numeric',
+                'mode_paiement' => 'required|in:carte,virement,cheque,espèces',
+                'id_compte' => 'required|exists:compte,id',
+                'id_beneficiaire' => 'required|exists:beneficiaire,id',
+                'status' => 'required|in:en attente,réussi,échoué',
+                'motif_de_la_depence' => 'required|string',
+                'impulsion' => 'required|in:TVA,IMF,loyer,Exonéré',
+            ]);
+            $paiement = Paiement::where('id', $id)->firstOrFail();
+            $paiement->update($request->all());
+        
+            return redirect()->route('paiements.index')->with('success', 'Paiement mis à jour avec succès.');
+        
+
+    }
+    public function destroy($id, $annee)
+    {
+        try {
+            $paiement = Paiement::where('id', $id)->firstOrFail();
+            $paiement->delete();
+    
+            return redirect()->route('paiements.index')->with('success', 'Paiement supprimé avec succès.');
+        } catch (\Exception $e) {
+            return redirect()->route('paiements.index')->with('error', 'Une erreur s\'est produite lors de la suppression du paiement.');
+        }
     }
 
+
+    // public function export()
+    // {
+
+    //     return Excel::download(new PaiementExport, 'paiements.xlsx');
+    // }
+   
     public function import(Request $request)
     {
     $request->validate([
@@ -119,7 +198,7 @@ class PaiementController extends Controller
     return back()->with('success', 'Les paiements ont été importés avec succès.');
     }
 
-    function convertirMontantEnLettres($montant) {
+function convertirMontantEnLettres($montant) {
         $montant = number_format($montant, 2, '.', ''); // Assurez-vous que le montant est bien formaté avec deux décimales
     
         $chiffres = [
@@ -230,7 +309,11 @@ function afficherAnneeActuelle() {
     $section->addText("MINISTERE DE L'ENSEIGNEMENT SUPERIEUR", ['bold' => true], ['align' => Jc::CENTER]);
     $section->addText("ET DE LA RECHERCHE SCIENTIFIQUE", ['bold' => true], ['align' => Jc::CENTER]);
     $section->addText("INSTITUT SUPÉRIEUR NUMÉRIQUE", ['bold' => true], ['align' => Jc::CENTER]);
+<<<<<<< HEAD
     $section->addText("Titre de paiement N° " . $paiement->id . "/" .$this-> afficherAnneeActuelle(), ['bold' => true, 'underline' => 'single'], ['align' => Jc::CENTER]);
+=======
+    $section->addText("Titre de paiement N° " . $paiement->id . "/" .$this->afficherAnneeActuelle(), ['bold' => true, 'underline' => 'single'], ['align' => Jc::CENTER]);
+>>>>>>> master
 
     // Corps
     $section->addText("Imputation budgétaire : Compte Principale :"." " .$this->afficherDeuxPremiersChiffres($paiement->compte->numero)." ". "SOUS Compte "." ". $paiement->compte->numero, ['bold' => true], ['align' => Jc::LEFT]);
@@ -279,7 +362,11 @@ function afficherAnneeActuelle() {
  $section->addText("MINISTERE DE L'ENSEIGNEMENT SUPERIEUR", ['bold' => true], ['align' => Jc::CENTER]);
  $section->addText("ET DE LA RECHERCHE SCIENTIFIQUE", ['bold' => true], ['align' => Jc::CENTER]);
  $section->addText("INSTITUT SUPÉRIEUR NUMÉRIQUE", ['bold' => true], ['align' => Jc::CENTER]);
+<<<<<<< HEAD
  $section->addText("Titre de paiement N° " . $paiement->id . "/" .$this-> afficherAnneeActuelle(), ['bold' => true, 'underline' => 'single'], ['align' => Jc::CENTER]);
+=======
+ $section->addText("Titre de paiement N° " . $paiement->id . "/" .$paiement->annee.$this->afficherAnneeActuelle(), ['bold' => true, 'underline' => 'single'], ['align' => Jc::CENTER]);
+>>>>>>> master
 
  // Corps
  $section->addText("Imputation budgétaire : Compte Principale :"." " .$this->afficherDeuxPremiersChiffres($paiement->compte->numero)." ". "SOUS Compte "." ". $paiement->compte->numero, ['bold' => true], ['align' => Jc::LEFT]);
@@ -329,7 +416,11 @@ function afficherAnneeActuelle() {
   $section->addText("MINISTERE DE L'ENSEIGNEMENT SUPERIEUR", ['bold' => true], ['align' => Jc::CENTER]);
   $section->addText("ET DE LA RECHERCHE SCIENTIFIQUE", ['bold' => true], ['align' => Jc::CENTER]);
   $section->addText("INSTITUT SUPÉRIEUR NUMÉRIQUE", ['bold' => true], ['align' => Jc::CENTER]);
+<<<<<<< HEAD
   $section->addText("Titre de paiement N° " . $paiement->id . "/" .$this-> afficherAnneeActuelle(), ['bold' => true, 'underline' => 'single'], ['align' => Jc::CENTER]);
+=======
+  $section->addText("Titre de paiement N° " . $paiement->id . "/" .$paiement->annee.$this->afficherAnneeActuelle(), ['bold' => true, 'underline' => 'single'], ['align' => Jc::CENTER]);
+>>>>>>> master
 
   // Corps
   $section->addText("Imputation budgétaire : Compte Principale :"." " .$this->afficherDeuxPremiersChiffres($paiement->compte->numero)." ". "SOUS Compte "." ". $paiement->compte->numero, ['bold' => true], ['align' => Jc::LEFT]);
@@ -375,7 +466,11 @@ function afficherAnneeActuelle() {
     $section->addText("MINISTERE DE L'ENSEIGNEMENT SUPERIEUR", null, ['align' => Jc::CENTER]);
     $section->addText("ET DE LA RECHERCHE SCIENTIFIQUE", null, ['align' => Jc::CENTER]);
     $section->addText("INSTITUT SUPÉRIEUR NUMÉRIQUE", ['bold' => true], ['align' => Jc::CENTER]);
+<<<<<<< HEAD
     $section->addText("Titre de paiement N° " . $paiement->id . "/" .$this-> afficherAnneeActuelle(), ['bold' => true, 'underline' => 'single'], ['align' => Jc::CENTER]);
+=======
+    $section->addText("Titre de paiement N° " . $paiement->id . "/" .$paiement->annee.$this->afficherAnneeActuelle(), ['bold' => true, 'underline' => 'single'], ['align' => Jc::CENTER]);
+>>>>>>> master
 
     // Corps
     $section->addText("Imputation budgétaire : Compte Principale :"." " .$this->afficherDeuxPremiersChiffres($paiement->compte->numero)." ". "SOUS Compte "." ". $paiement->compte->numero, null, ['align' => Jc::LEFT]);
@@ -431,6 +526,7 @@ function afficherAnneeActuelle() {
     }
     
 
+<<<<<<< HEAD
     public function updateNextId(Request $request)
     {
         // Validation des données
@@ -465,3 +561,39 @@ function afficherAnneeActuelle() {
         }
     }
 }
+=======
+    // public function updateNextId(Request $request)
+    // {
+    //     // Validation des données
+    //     $request->validate([
+    //         'year' => 'required|integer',
+    //         'next_id' => 'required|integer|min:1',
+    //     ]);
+    
+    //     // Récupérer les valeurs du formulaire
+    //     $year = $request->input('year');
+    //     $newNextId = $request->input('next_id');
+    
+    //     // Vérifier que la nouvelle ID est supérieure à la dernière ID pour cette année
+    //     $currentMaxId = DB::table('paiement')
+    //         ->whereYear('date_paiement', $year)
+    //         ->max('id') ?? 0;
+    
+    //     if ($newNextId <= $currentMaxId) {
+    //         return redirect()->route('paiement.showLastIdPerYear')
+    //             ->with('error', "La nouvelle ID doit être supérieure à l'ID maximum actuel pour l'année $year ($currentMaxId).");
+    //     }
+    
+    //     try {
+    //         // Mettre à jour la prochaine ID dans la table
+    //         DB::statement("ALTER TABLE paiement AUTO_INCREMENT = $newNextId");
+    
+    //         return redirect()->route('paiement.showLastIdPerYear')
+    //             ->with('success', "La prochaine ID pour l'année $year a été mise à jour à $newNextId.");
+    //     } catch (\Exception $e) {
+    //         return redirect()->route('paiement.showLastIdPerYear')
+    //             ->with('error', "Une erreur est survenue lors de la mise à jour de la prochaine ID : " . $e->getMessage());
+    //     }
+    // }
+}
+>>>>>>> master
