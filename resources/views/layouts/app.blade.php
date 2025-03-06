@@ -13,7 +13,7 @@
 <body>
 
     <!-- Barre de navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    {{-- <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="{{ url('/') }}">
                 <!-- Utilisez asset() pour charger l'image -->
@@ -48,7 +48,7 @@
                 </ul>
             </div>
         </div>
-    </nav>
+    </nav> --}}
 
     <!-- Contenu principal -->
     <div class="container mt-4">

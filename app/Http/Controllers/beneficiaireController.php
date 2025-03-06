@@ -42,7 +42,7 @@ class beneficiaireController extends Controller
     
         $beneficiaire->update($request->all());
     
-        return redirect()->route('beneficiaire.index')->with('success', 'Bénéficiaire mis à jour avec succès.');
+        return redirect()->route('admin.dashboard')->with('success', 'Bénéficiaire mis à jour avec succès.');
     }
 
     public function store(Request $request)
@@ -58,7 +58,7 @@ class beneficiaireController extends Controller
         
         Beneficiaire::create($request->all());
 
-        return redirect()->route('beneficiaire.index')->with('success', 'Bénéficiaire créé avec succès.');
+        return redirect()->route('admin.dashboard')->with('success', 'Bénéficiaire créé avec succès.');
     }
 
     public function destroy(Beneficiaire $beneficiaire)
@@ -69,7 +69,7 @@ class beneficiaireController extends Controller
         // Supprimez le bénéficiaire
         $beneficiaire->delete();
     
-        return redirect()->route('beneficiaire.index')->with('success', 'Bénéficiaire supprimé avec succès.');
+        return redirect()->route('admin.dashboard')->with('success', 'Bénéficiaire supprimé avec succès.');
     }
     
     
@@ -91,5 +91,13 @@ class beneficiaireController extends Controller
     public function export()
     {
         return Excel::download(new BeneficiairesExport, 'beneficiaires.xlsx');
+    }
+    public function userb()
+    {
+        if (auth()->guest()) {
+            return redirect()->route('login');
+        }
+        $beneficiaires = Beneficiaire::all();
+        return view('partieUsers.b', compact('beneficiaires'));
     }
 }

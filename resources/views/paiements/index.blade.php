@@ -1,5 +1,5 @@
 
-
+{{-- @if (Session::has('user_id')) --}}
 @extends('layouts.app')
 
 @section('content')
@@ -27,12 +27,14 @@
             </div>
         </form> --}}
     </div>
-    {{-- <a href="{{ route('paiements.export', ['id' => $paiement->id] ) }}" class="btn btn-success">Exporter </a>
-    <a href="{{ route('paiements.import', ['id' => $paiement->id] ) }}" class="btn btn-success">Importer</a> --}}
+    {{-- <a href="{{ route('paiements.export', ['id' => $paiement->id] ) }}" class="btn btn-success">Exporter </a> --}}
+    {{-- <a href="{{ route('paiements.import', ['id' => $paiement->id] ) }}" class="btn btn-success">Importer</a> --}}
+    
     <table class="table mt-4">
         <thead>
             <tr>
-                <th>id</th>
+                <th>#</th>
+                {{-- <th>id</th> --}}
                 <th>Montant</th>
                 <th>Date de Paiement</th>
                 <th>Mode de Paiement</th>
@@ -49,7 +51,8 @@
         <tbody>
             @foreach ($paiements as $paiement)
             <tr>
-                <th>{{$paiement->id}}</th>
+                <td>{{ $paiement->id }}</td>
+                {{-- <th>{{$paiement->id}}</th> --}}
                 <td>{{ $paiement->montant }}</td>
                 <td>{{ \Carbon\Carbon::parse($paiement->date_paiement)->format('Y-m-d') }}</td>
                 <td>{{ $paiement->mode_paiement }}</td>
@@ -76,3 +79,8 @@
 </div>
 
 @endsection
+{{-- @else
+<script>
+    window.location.href = "{{ route('connexion.form') }}";
+</script>
+@endif --}}

@@ -35,7 +35,7 @@ class CompteController extends Controller
         ]);
 
         Compte::create($request->all());
-        return redirect()->route('compte.index')->with('success', 'Compte créé avec succès.');
+        return redirect()->route('admin.dashboard')->with('success', 'Compte créé avec succès.');
     }
 
     public function edit(Compte $compte)
@@ -54,13 +54,13 @@ class CompteController extends Controller
         ]);
         
         $compte->update($request->all());
-        return redirect()->route('compte.index')->with('success', 'Compte mis à jour avec succès.');
+        return redirect()->route('admin.dashboard')->with('success', 'Compte mis à jour avec succès.');
     }
 
     public function destroy(Compte $compte)
     {
         $compte->delete();
-        return redirect()->route('compte.index')->with('success', 'Compte supprimé avec succès.');
+        return redirect()->route('admin.dashboard')->with('success', 'Compte supprimé avec succès.');
     }
 
     public function export()
@@ -76,9 +76,18 @@ class CompteController extends Controller
 
         try {
             Excel::import(new ComptesImport, $request->file('file'));
-            return redirect()->route('compte.index')->with('success', 'Comptes importés avec succès!');
+            return redirect()->route('admin.dashboard')->with('success', 'Comptes importés avec succès!');
         } catch (\Exception $e) {
-            return redirect()->route('compte.index')->with('error', 'Erreur lors de l\'importation : ' . $e->getMessage());
+            return redirect()->route('admin.dashboard')->with('error', 'Erreur lors de l\'importation : ' . $e->getMessage());
         }
+    }
+    
+    public function userc()
+    {
+        if (auth()->guest()) {
+            return redirect()->route('login');
+        }
+        $comptes = Compte::all();
+        return view('partieUsers.c', compact('comptes'));
     }
 }

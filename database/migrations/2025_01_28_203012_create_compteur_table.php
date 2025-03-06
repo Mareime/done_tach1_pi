@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('compteur', function (Blueprint $table) {
-            // $table->id();
-            $table->integer('annee')->primary();
+            $table->id(); // Ajoute la colonne id auto-incrémentée
+            $table->integer('annee')->unique(); // Pour éviter les doublons d'année
             $table->integer('compteur')->default(0);
             $table->timestamps();
         });

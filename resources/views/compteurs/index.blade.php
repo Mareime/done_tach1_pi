@@ -26,9 +26,16 @@
                     <td>{{ $compteur->annee }}</td>
                     <td>{{ $compteur->compteur }}</td>
                     <td>
-                        
+                        <!-- Lien de modification -->
+                        <a href="{{ route('compteurs.edit', $compteur->id) }}" class="btn btn-warning btn-sm">Modifier</a>
+
+                        <!-- Formulaire de suppression -->
+                        <form action="{{ route('compteurs.destroy', $compteur->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce compteur ?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
+                        </form>
                     </td>
-                    
                 </tr>
             @endforeach
         </tbody>

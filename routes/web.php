@@ -4,6 +4,7 @@ use App\Http\Controllers\CompteController;
 use App\Http\Controllers\beneficiaireController;
 use App\Http\Controllers\PaiementController;
 use App\Http\Controllers\CompteurController;
+use App\Http\Controllers\AdminController;
 
 use App\Http\Controllers\TaxeController;
 use Illuminate\Support\Facades\Route;
@@ -82,3 +83,22 @@ Route::delete('/users/{user}', [controleruser::class, 'destroy'])->name('users.d
 Route::get('compteurs', [CompteurController::class, 'index'])->name('compteurs.index'); 
 Route::get('compteurs/create', [CompteurController::class, 'create'])->name('compteurs.create');  
 Route::post('compteurs', [CompteurController::class, 'store'])->name('compteurs.store');  
+Route::get('compteurs/{compteur}/edit', [CompteurController::class,'edit'])->name('compteurs.edit');
+Route::put('compteurs/{compteur}', [CompteurController::class,'update'])->name('compteurs.update');
+Route::delete('compteurs/{compteur}', [CompteurController::class,'destroy'])->name('compteurs.destroy');
+
+// routes admin
+
+Route::get('/admin/comptes', [AdminController::class, 'compt_index'])->name('admin.compt_index');
+Route::get('/admin/beneficiaire', [AdminController::class, 'benefi_index'])->name('admin.benefi_index');
+Route::get('/admin/paiement', [AdminController::class, 'paieme_index'])->name('admin.paieme_index');
+Route::get('/admin/taxes', [AdminController::class, 'taxes_index'])->name('admin.taxes_index');
+// Route::get('/admin/taxes', [AdminController::class, 'compteure_index'])->name('admin.admin.compteure_index');
+Route::get('/admin/dashboard/stats', [AdminController::class, 'getStats'])->name('admin.dashboard.stats');
+Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+
+// Route::get('/user', [controleruser::class, 'profil'])->name('users.profil');
+Route::get('/user/paiment', [PaiementController::class, 'userpaiment'])->name('paiment.user');
+Route::get('/user/beneficiaire', [beneficiaireController::class, 'userb'])->name('userb');
+Route::get('/user/comptes', [CompteController::class,'userc'])->name('userc'); 
+Route::get('/user/taxes', [TaxeController::class, 'usertaxe'])->name('usertaxe'); 

@@ -94,7 +94,7 @@ class PaiementController extends Controller
             // Valider la transaction
             DB::commit();
     
-            return redirect()->route('paiements.index')->with('success', 'Paiement ajouté avec succès!');
+            return redirect()->route('admin.dashboard')->with('success', 'Paiement ajouté avec succès!');
         } catch (\Exception $e) {
             // En cas d'erreur, annuler la transaction
             DB::rollBack();
@@ -126,19 +126,19 @@ class PaiementController extends Controller
             $paiement = Paiement::where('id', $id)->firstOrFail();
             $paiement->update($request->all());
         
-            return redirect()->route('paiements.index')->with('success', 'Paiement mis à jour avec succès.');
+            return redirect()->route('admin.dashboard')->with('success', 'Paiement mis à jour avec succès.');
         
 
     }
-    public function destroy($id, $annee)
+    public function destroy($id)
     {
         try {
             $paiement = Paiement::where('id', $id)->firstOrFail();
             $paiement->delete();
     
-            return redirect()->route('paiements.index')->with('success', 'Paiement supprimé avec succès.');
+            return redirect()->route('admin.dashboard')->with('success', 'Paiement supprimé avec succès.');
         } catch (\Exception $e) {
-            return redirect()->route('paiements.index')->with('error', 'Une erreur s\'est produite lors de la suppression du paiement.');
+            return redirect()->route('admin.dashboard')->with('error', 'Une erreur s\'est produite lors de la suppression du paiement.');
         }
     }
 
@@ -505,4 +505,12 @@ function afficherAnneeActuelle() {
     //             ->with('error', "Une erreur est survenue lors de la mise à jour de la prochaine ID : " . $e->getMessage());
     //     }
     // }
+
+    public function userpaiment(){
+        if (auth()->guest()) {
+            return redirect()->route('login');
+        }
+        $paiements = Paiement::all();
+        return view('partieUsers.index', compact('paiements'));
+    }
 }

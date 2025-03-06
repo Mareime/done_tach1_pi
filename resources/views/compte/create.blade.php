@@ -31,7 +31,7 @@
             </div>
             <div class="d-flex justify-content-start">
                 <button type="submit" class="btn btn-primary">Créer</button>
-                <a href="{{ route('compte.index') }}" class="btn btn-secondary ml-2">Annuler</a>
+                <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary ml-2">Annuler</a>
             </div>
         </form>
     </div>

@@ -66,7 +66,7 @@
             <div class="row mb-3">
                 <div class="col-md-9 offset-md-3">
                     <button type="submit" class="btn btn-primary">Mettre à jour le compte</button>
-                    <a href="{{ route('compte.index') }}" class="btn btn-secondary ml-2">Annuler</a>
+                    <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary ml-2">Annuler</a>
                 </div>
             </div>
         </form>
